@@ -1,0 +1,24 @@
+02-12 16:18:17.890    5430-5712/travel.iknow.android D/Retrofit? ---> HTTP POST http://api.iknow.travel/auth/local
+02-12 16:18:17.890    5430-5712/travel.iknow.android D/Retrofit? X-Api-Version: 4
+02-12 16:18:17.891    5430-5712/travel.iknow.android D/Retrofit? Accept: application/json
+02-12 16:18:17.891    5430-5712/travel.iknow.android D/Retrofit? X-User-Agent: cherry-moscow/1
+02-12 16:18:17.892    5430-5712/travel.iknow.android D/Retrofit? Content-Type: application/json; charset=UTF-8
+02-12 16:18:17.893    5430-5712/travel.iknow.android D/Retrofit? Content-Length: 89
+02-12 16:18:17.940    5430-5712/travel.iknow.android D/Retrofit? {"password":"somepass","email":"pristalovpavel@gmail.com","name":"Just Me","create":true}
+02-12 16:18:17.941    5430-5712/travel.iknow.android D/Retrofit? ---> END HTTP (89-byte body)
+02-12 16:18:19.675    5430-5712/travel.iknow.android D/Retrofit? <--- HTTP 200 http://api.iknow.travel/auth/local (1732ms)
+02-12 16:18:19.676    5430-5712/travel.iknow.android D/Retrofit? : HTTP/1.1 200 OK
+02-12 16:18:19.677    5430-5712/travel.iknow.android D/Retrofit? Connection: keep-alive
+02-12 16:18:19.677    5430-5712/travel.iknow.android D/Retrofit? Content-Length: 454
+02-12 16:18:19.678    5430-5712/travel.iknow.android D/Retrofit? Content-Type: application/json; charset=utf-8
+02-12 16:18:19.678    5430-5712/travel.iknow.android D/Retrofit? Date: Thu, 12 Feb 2015 13:18:20 GMT
+02-12 16:18:19.679    5430-5712/travel.iknow.android D/Retrofit? Server: nginx/1.6.2
+02-12 16:18:19.680    5430-5712/travel.iknow.android D/Retrofit? Set-Cookie: _uid=i6269h3r_4lykpw0t9hz4; Max-Age=31104000; Domain=.iknow.travel; Path=/; Expires=Sun, 07 Feb 2016 13:18:19 GMT
+02-12 16:18:19.680    5430-5712/travel.iknow.android D/Retrofit? Set-Cookie: iknow.travel.connect.sid=s%3AAAvhBMHciYdOCvnu_ChcMTvZ.DJ7nGJqFECSbncpifOqALvkWBQ6mj8glerACy98M6ig; Domain=.iknow.travel; Path=/; Expires=Wed, 13 May 2015 13:18:20 GMT; HttpOnly
+02-12 16:18:19.681    5430-5712/travel.iknow.android D/Retrofit? X-Android-Received-Millis: 1423747099614
+02-12 16:18:19.681    5430-5712/travel.iknow.android D/Retrofit? X-Android-Sent-Millis: 1423747098647
+02-12 16:18:19.682    5430-5712/travel.iknow.android D/Retrofit? X-Berry-Env: p4
+02-12 16:18:19.682    5430-5712/travel.iknow.android D/Retrofit? X-Berry-Version: 2.8.1.c997e3a
+02-12 16:18:19.683    5430-5712/travel.iknow.android D/Retrofit? X-Powered-By: Express
+02-12 16:18:19.700    5430-5712/travel.iknow.android D/Retrofit? {"_id":"8gapljh7","locale":"ru","type":"user","email":"pristalovpavel@gmail.com","role":"user","new_user":true,"__v":0,"updated":"2015-02-12T13:18:19.977Z","created":"2015-02-12T13:18:19.870Z","random":0.4764515678398311,"checkpoints":{"registration":{"domain":"direct","landing":"(api)","agent":"Dalvik/1.6.0 (Linux; U; Android 4.0.4; Alpha GTR Build/IMM76D)","ip":"213.87.137.118","date":"2015-02-12T13:18:19.863Z"},"first_visit":{"domain":"direct","landing":"(api)","agent":"Dalvik/1.6.0 (Linux; U; Android 4.0.4; Alpha GTR Build/IMM76D)","ip":"213.87.137.118","date":"2015-02-12T13:18:19.863Z"}},"notifications":{"news":true,"share":true,"digest":true},"favorites_remove":null,"favorites_add":null,"id":"8gapljh7","name":"Just Me","tags":{"experiment":"basic-1.6.1"},"active_locale":"ru","rating":0,"avatar":{"filename":"defaultavatar","_id":"defaultavatar","copyrights":null}}
+02-12 16:18:19.701    5430-5712/travel.iknow.android D/Retrofit? <--- END HTTP (881-byte body)
