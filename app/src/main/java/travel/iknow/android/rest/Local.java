@@ -10,7 +10,6 @@ public class Local
     private String password;
     private boolean create;
 
-
     public Local()
     {
         setName("");

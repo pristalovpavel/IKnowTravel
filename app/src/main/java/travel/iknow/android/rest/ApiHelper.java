@@ -1,10 +1,15 @@
 package travel.iknow.android.rest;
 
+import java.util.List;
+
 import retrofit.Callback;
 import retrofit.RequestInterceptor;
+import retrofit.RestAdapter;
 import retrofit.client.Response;
 import retrofit.http.Body;
+import retrofit.http.GET;
 import retrofit.http.POST;
+import travel.iknow.android.data.DataSource;
 
 /**
  * Created by Pristalov Pavel on 12.02.2015 for IKnowTravel.
@@ -15,6 +20,15 @@ public interface ApiHelper
 
     @POST("/auth/local")
     void registration(@Body Local local, Callback<Object> cb);
+
+    @POST("/auth/local")
+    void auth(@Body Local local, Callback<Object> cb);
+
+    @POST("/auth_token")
+    void requestToken(Callback<Token> cb);
+
+    @GET("/contents")
+    void loadContent(Callback<List<Content>> cb);
 
     RequestInterceptor requestInterceptor = new RequestInterceptor()
     {

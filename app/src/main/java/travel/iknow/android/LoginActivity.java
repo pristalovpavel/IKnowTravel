@@ -2,13 +2,14 @@ package travel.iknow.android;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
+import android.app.Activity;
 import android.app.LoaderManager.LoaderCallbacks;
 import android.content.CursorLoader;
 import android.content.Intent;
 import android.content.Loader;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.net.Uri;
-import android.os.AsyncTask;
 
 import android.os.Build;
 import android.os.Bundle;
@@ -25,19 +26,15 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import org.apache.http.HttpStatus;
-
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
-import java.util.logging.Logger;
 
 import retrofit.Callback;
-import retrofit.RestAdapter;
 import retrofit.RetrofitError;
 import retrofit.client.Response;
-import travel.iknow.android.rest.ApiHelper;
+import travel.iknow.android.data.DataSource;
 import travel.iknow.android.rest.Local;
+import travel.iknow.android.rest.Token;
 
 
 /**
@@ -48,7 +45,7 @@ public class LoginActivity extends ActionBarActivity implements LoaderCallbacks<
     /**
      * Keep track of the login task to ensure we can cancel it if requested.
      */
-    private UserLoginTask mAuthTask = null;
+    //private UserLoginTask mAuthTask = null;
 
     // UI references.
     private EditText mNameView;
@@ -57,11 +54,17 @@ public class LoginActivity extends ActionBarActivity implements LoaderCallbacks<
     private View mProgressView;
     private View mLoginFormView;
 
+    private String name;
+    private String email;
+    private String password;
+
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
+
+        if(isRegistered()) startMainActivity();
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.main_toolbar);
         setSupportActionBar(toolbar);
@@ -101,6 +104,13 @@ public class LoginActivity extends ActionBarActivity implements LoaderCallbacks<
         mProgressView = findViewById(R.id.login_progress);
     }
 
+    void startMainActivity()
+    {
+        Intent intent = new Intent(this, MainActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
+        startActivity(intent);
+    }
+
     private void populateAutoComplete()
     {
         getLoaderManager().initLoader(0, null, this);
@@ -114,23 +124,15 @@ public class LoginActivity extends ActionBarActivity implements LoaderCallbacks<
      */
     public void attemptLogin()
     {
-        if (mAuthTask != null)
-        {
-            return;
-        }
-
         // Reset errors.
         mNameView.setError(null);
         mEmailView.setError(null);
         mPasswordView.setError(null);
 
         // Store values at the time of the login attempt.
-        String name = mNameView.getText().toString();
-        String email = mEmailView.getText().toString();
-        String password = mPasswordView.getText().toString();
-
-        boolean cancel = false;
-        View focusView = null;
+        name = mNameView.getText().toString();
+        email = mEmailView.getText().toString();
+        password = mPasswordView.getText().toString();
 
         if (TextUtils.isEmpty(name) || !isNameValid(name))
         {
@@ -155,30 +157,34 @@ public class LoginActivity extends ActionBarActivity implements LoaderCallbacks<
             return;
         }
 
+        saveProfile(name, email, password);
+
         showProgress(true);
 
-        RestAdapter restAdapter = new RestAdapter.Builder()
-                .setLogLevel(RestAdapter.LogLevel.FULL)
-                .setEndpoint("http://api.iknow.travel/")
-                .setRequestInterceptor(ApiHelper.requestInterceptor)
-                .build();
+        performAuth();
+    }
 
-        ApiHelper service = restAdapter.create(ApiHelper.class);
+    private void performAuth()
+    {
+        final IKnowTravelApplication application = ((IKnowTravelApplication) getApplication());
 
-        Callback<Object> cb = new Callback<Object>()
+        Callback<Token> cb = new Callback<Token>()
         {
             /**
              * Successful HTTP response.
              *
-             * @param o
+             * @param newToken
              * @param response
              */
             @Override
-            public void success(Object o, Response response)
+            public void success(Token newToken, Response response)
             {
-                Toast.makeText(LoginActivity.this, "Successfully registered!", Toast.LENGTH_SHORT)
+                Toast.makeText(LoginActivity.this, "token: " + newToken, Toast.LENGTH_SHORT)
                         .show();
-                startActivity(new Intent(LoginActivity.this, MainActivity.class));
+                DataSource.currentToken = newToken.getToken();
+
+                application.updateHeaders(newToken.getToken());
+                registration();
             }
 
             /**
@@ -190,14 +196,67 @@ public class LoginActivity extends ActionBarActivity implements LoaderCallbacks<
             @Override
             public void failure(RetrofitError error)
             {
+                Toast.makeText(LoginActivity.this, "cannot get token", Toast.LENGTH_SHORT).show();
+            }
+        };
+
+        application.apiHelper.requestToken(cb);
+    }
+
+    private void registration()
+    {
+        Callback<Object> cb = new Callback<Object>()
+        {
+            /**
+             * Successful HTTP response.
+             *
+             * @param o
+             * @param response
+             */
+            @Override
+            public void success(Object o, Response response)
+            {
+                showProgress(false);
+                Toast.makeText(LoginActivity.this, "Successfully registered!", Toast.LENGTH_SHORT)
+                        .show();
+
+                startMainActivity();
+            }
+
+            /**
+             * Unsuccessful HTTP response due to network failure, non-2XX status code, or unexpected
+             * exception.
+             *
+             * @param error
+             */
+            @Override
+            public void failure(RetrofitError error)
+            {
+                showProgress(false);
                 Toast.makeText(LoginActivity.this, "cannot load", Toast.LENGTH_SHORT).show();
             }
         };
 
-        service.registration(new Local(name, email, password, true), cb);
+        ((IKnowTravelApplication)getApplication()).apiHelper.registration(new Local(name, email, password, true), cb);
+    }
 
-        //mAuthTask = new UserLoginTask(new Local(name, email, password, true));
-        //mAuthTask.execute((Void) null);
+    private void saveProfile(String name, String email, String pass)
+    {
+        SharedPreferences.Editor editor = getSharedPreferences(DataSource.PREFERENCES_NAME, 0).edit();
+        editor.putString(DataSource.NAME_PREFERENCES_NAME, name);
+        editor.putString(DataSource.EMAIL_PREFERENCES_NAME, email);
+        editor.putString(DataSource.PASSWORD_PREFERENCES_NAME, pass);
+        editor.commit();
+    }
+
+    private boolean isRegistered()
+    {
+        SharedPreferences prefs = getSharedPreferences(DataSource.PREFERENCES_NAME, 0);
+        String name = prefs.getString(DataSource.NAME_PREFERENCES_NAME, "");
+        String email = prefs.getString(DataSource.EMAIL_PREFERENCES_NAME, "");
+        String password = prefs.getString(DataSource.PASSWORD_PREFERENCES_NAME, "");
+
+        return (!name.isEmpty() && !email.isEmpty() && !password.isEmpty());
     }
 
     private boolean isNameValid(String name)
@@ -317,54 +376,54 @@ public class LoginActivity extends ActionBarActivity implements LoaderCallbacks<
      * Represents an asynchronous login/registration task used to authenticate
      * the user.
      */
-    public class UserLoginTask extends AsyncTask<Void, Void, Boolean>
-    {
-        private final Local local;
-
-        UserLoginTask(Local local)
-        {
-            this.local = local;
-        }
-
-        @Override
-        protected Boolean doInBackground(Void... params)
-        {
-            RestAdapter restAdapter = new RestAdapter.Builder()
-                        .setEndpoint("http://api.iknow.travel")
-                        .setRequestInterceptor(ApiHelper.requestInterceptor)
-                        .build();
-
-
-            ApiHelper service = restAdapter.create(ApiHelper.class);
-            //Response response = service.registration(local);
-
-            return true;//response.getStatus() == HttpStatus.SC_OK;
-        }
-
-        @Override
-        protected void onPostExecute(final Boolean success)
-        {
-            mAuthTask = null;
-            showProgress(false);
-
-            if (success)
-            {
-                //finish();
-            }
-            else
-            {
-                mPasswordView.setError(getString(R.string.error_incorrect_password));
-                mPasswordView.requestFocus();
-            }
-        }
-
-        @Override
-        protected void onCancelled()
-        {
-            mAuthTask = null;
-            showProgress(false);
-        }
-    }
+//    public class UserLoginTask extends AsyncTask<Void, Void, Boolean>
+//    {
+//        private final Local local;
+//
+//        UserLoginTask(Local local)
+//        {
+//            this.local = local;
+//        }
+//
+//        @Override
+//        protected Boolean doInBackground(Void... params)
+//        {
+//            RestAdapter restAdapter = new RestAdapter.Builder()
+//                        .setEndpoint("http://api.iknow.travel")
+//                        .setRequestInterceptor(ApiHelper.requestInterceptor)
+//                        .build();
+//
+//
+//            ApiHelper apiHelper = restAdapter.create(ApiHelper.class);
+//            //Response response = apiHelper.registration(local);
+//
+//            return true;//response.getStatus() == HttpStatus.SC_OK;
+//        }
+//
+//        @Override
+//        protected void onPostExecute(final Boolean success)
+//        {
+//            mAuthTask = null;
+//            showProgress(false);
+//
+//            if (success)
+//            {
+//                //finish();
+//            }
+//            else
+//            {
+//                mPasswordView.setError(getString(R.string.error_incorrect_password));
+//                mPasswordView.requestFocus();
+//            }
+//        }
+//
+//        @Override
+//        protected void onCancelled()
+//        {
+//            mAuthTask = null;
+//            showProgress(false);
+//        }
+//    }
 }
 
 

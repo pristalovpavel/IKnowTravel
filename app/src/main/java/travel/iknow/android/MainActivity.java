@@ -1,14 +1,40 @@
 package travel.iknow.android;
 
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.view.View;
+import android.widget.ProgressBar;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import java.util.List;
+
+import retrofit.Callback;
+import retrofit.RetrofitError;
+import retrofit.client.Response;
+import travel.iknow.android.data.DataSource;
+import travel.iknow.android.rest.Content;
+import travel.iknow.android.rest.Local;
+import travel.iknow.android.rest.Token;
 
 /**
  * Created by Pristalov Pavel on 12.02.2015 for IKnowTravel.
  */
 public class MainActivity extends ActionBarActivity
 {
+    private String name;
+    private String email;
+    private String password;
+
+    private ProgressBar loadingBar;
+    private RecyclerView recyclerView;
+    private RecyclerView.Adapter adapter;
+    private RecyclerView.LayoutManager layoutManager;
+
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
@@ -17,5 +43,149 @@ public class MainActivity extends ActionBarActivity
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.main_toolbar);
         setSupportActionBar(toolbar);
+
+        TextView text = (TextView) findViewById(R.id.title);
+        text.setText(R.string.app_name);
+
+        loadingBar = (ProgressBar) findViewById(R.id.loading_progress);
+        loadingBar.setVisibility(View.VISIBLE);
+
+        performAuth();
+
+        recyclerView = (RecyclerView) findViewById(R.id.recycler_view);
+
+        // use this setting to improve performance if you know that changes
+        // in content do not change the layout size of the RecyclerView
+        recyclerView.setHasFixedSize(true);
+
+        // use a linear layout manager
+        layoutManager = new LinearLayoutManager(this);
+        recyclerView.setLayoutManager(layoutManager);
+
+    }
+
+    private void auth()
+    {
+        SharedPreferences prefs = getSharedPreferences(DataSource.PREFERENCES_NAME, 0);
+        name = prefs.getString(DataSource.NAME_PREFERENCES_NAME, "");
+        email = prefs.getString(DataSource.EMAIL_PREFERENCES_NAME, "");
+        password = prefs.getString(DataSource.PASSWORD_PREFERENCES_NAME, "");
+
+        if(name.isEmpty() || email.isEmpty() || password.isEmpty()) return;
+
+        Callback<Object> cb = new Callback<Object>()
+        {
+            /**
+             * Successful HTTP response.
+             *
+             * @param o
+             * @param response
+             */
+            @Override
+            public void success(Object o, Response response)
+            {
+                Toast.makeText(MainActivity.this, "Successfully authed!", Toast.LENGTH_SHORT)
+                        .show();
+
+                getContent();
+            }
+
+            /**
+             * Unsuccessful HTTP response due to network failure, non-2XX status code, or unexpected
+             * exception.
+             *
+             * @param error
+             */
+            @Override
+            public void failure(RetrofitError error)
+            {
+                Toast.makeText(MainActivity.this, "cannot load", Toast.LENGTH_SHORT).show();
+                loadingBar.setVisibility(View.GONE);
+            }
+        };
+
+        ((IKnowTravelApplication) getApplication()).apiHelper
+                .auth(new Local(name, email, password, false), cb);
+    }
+
+    private void performAuth()
+    {
+        final IKnowTravelApplication application = ((IKnowTravelApplication) getApplication());
+
+        Callback<Token> cb = new Callback<Token>()
+        {
+            /**
+             * Successful HTTP response.
+             *
+             * @param newToken
+             * @param response
+             */
+            @Override
+            public void success(Token newToken, Response response)
+            {
+                Toast.makeText(MainActivity.this, "token: " + newToken.getToken(), Toast.LENGTH_SHORT)
+                        .show();
+                DataSource.currentToken = newToken.getToken();
+
+                application.updateHeaders(newToken.getToken());
+                auth();
+            }
+
+            /**
+             * Unsuccessful HTTP response due to network failure, non-2XX status code, or unexpected
+             * exception.
+             *
+             * @param error
+             */
+            @Override
+            public void failure(RetrofitError error)
+            {
+                loadingBar.setVisibility(View.GONE);
+                Toast.makeText(MainActivity.this, "cannot get token", Toast.LENGTH_SHORT).show();
+            }
+        };
+
+        application.apiHelper.requestToken(cb);
+    }
+
+    private void getContent()
+    {
+        final IKnowTravelApplication application = ((IKnowTravelApplication) getApplication());
+
+        Callback<List<Content>> cb = new Callback<List<Content>>()
+        {
+            /**
+             * Successful HTTP response.
+             *
+             * @param contents
+             * @param response
+             */
+            @Override
+            public void success(List<Content> contents, Response response)
+            {
+                loadingBar.setVisibility(View.GONE);
+                Toast.makeText(MainActivity.this, "Content loaded", Toast.LENGTH_SHORT)
+                        .show();
+
+                // specify an adapter (see also next example)
+                adapter = new ContentAdapter(MainActivity.this, contents);
+                recyclerView.setAdapter(adapter);
+            }
+
+            /**
+             * Unsuccessful HTTP response due to network failure, non-2XX status code, or unexpected
+             * exception.
+             *
+             * @param error
+             */
+            @Override
+            public void failure(RetrofitError error)
+            {
+                loadingBar.setVisibility(View.GONE);
+                Toast.makeText(MainActivity.this, "cannot load content", Toast.LENGTH_SHORT).show();
+            }
+        };
+
+        application.apiHelper.loadContent(cb);
     }
 }
