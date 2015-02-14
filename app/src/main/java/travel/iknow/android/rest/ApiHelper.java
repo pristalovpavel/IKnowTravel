@@ -9,6 +9,7 @@ import retrofit.client.Response;
 import retrofit.http.Body;
 import retrofit.http.GET;
 import retrofit.http.POST;
+import retrofit.http.Query;
 import travel.iknow.android.data.DataSource;
 
 /**
@@ -27,7 +28,7 @@ public interface ApiHelper
     @POST("/auth_token")
     void requestToken(Callback<Token> cb);
 
-    @GET("/contents")
+    @GET("/contents?region=Russia_Moscow")
     void loadContent(Callback<List<Content>> cb);
 
     RequestInterceptor requestInterceptor = new RequestInterceptor()

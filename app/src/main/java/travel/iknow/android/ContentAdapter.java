@@ -12,6 +12,9 @@ import com.squareup.picasso.Picasso;
 
 import java.util.List;
 
+import travel.iknow.android.data.DataSource;
+import travel.iknow.android.rest.AbstractCover;
+import travel.iknow.android.rest.AddressCover;
 import travel.iknow.android.rest.Category;
 import travel.iknow.android.rest.Content;
 
@@ -76,8 +79,16 @@ public class ContentAdapter extends RecyclerView.Adapter<ContentAdapter.ViewHold
         }
         allCategories = allCategories.substring(0, allCategories.length() - 2);
         holder.category.setText(allCategories);
-        String url = content.getCover().getUrl();
-        if(!url.isEmpty()) Picasso.with(context).load(url).into(holder.icon);
+
+        AbstractCover currentCover = content.getAddressCover();
+
+        if(content.getType().equals(DataSource.TYPE_ARTICLE))
+            currentCover = content.getArticleCover();
+
+        makeImageUrl(currentCover);
+
+        if(!currentCover.getUrl().isEmpty())
+            Picasso.with(context).load(currentCover.getUrl()).into(holder.icon);
     }
 
     // Return the size of your dataset (invoked by the layout manager)
@@ -85,6 +96,35 @@ public class ContentAdapter extends RecyclerView.Adapter<ContentAdapter.ViewHold
     public int getItemCount()
     {
         return dataset.size();
+    }
+
+    private void makeImageUrl(AbstractCover cover)
+    {
+        if(cover.getFilename().isEmpty()) return;
+
+        /*Display display = ((Activity) context).getWindowManager().getDefaultDisplay();
+        Point size = new Point();
+        display.getSize(size);
+
+        int width = size.x;
+        int height = (int)(width / 1.5);
+        */
+
+        if(!cover.getUrl().contains(cover.getFilename()))
+        {
+            String newUrl = new StringBuilder()
+                    .append(DataSource.API_DOMAIN_ADDRESS)
+                    .append(DataSource.PHOTO_SUFFIX)
+                    .append(cover.getFilename())
+                    .append("_144x144.jpg")
+//                    .append(width)
+//                    .append("x")
+//                    .append(height)
+//                    .append(".jpg")
+                    .toString();
+
+            cover.setUrl(newUrl);
+        }
     }
 }
 

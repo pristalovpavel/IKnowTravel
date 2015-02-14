@@ -14,15 +14,19 @@ public class Content
 
     private ArrayList<Category> categories;
 
-    @SerializedName("\"address_cover\"")
-    private AddressCover cover;
+    @SerializedName("address_cover_1x")
+    private AddressCover addressCover;
+
+    @SerializedName("article_cover_1x")
+    private ArticleCover articleCover;
 
     public Content()
     {
         setTitle("");
         setType("");
         setCategories(new ArrayList<Category>());
-        setCover(new AddressCover());
+        setAddressCover(new AddressCover());
+        setArticleCover(new ArticleCover());
     }
 
     public String getTitle()
@@ -55,13 +59,23 @@ public class Content
         this.categories = categories;
     }
 
-    public AddressCover getCover()
+    public AddressCover getAddressCover()
     {
-        return cover;
+        return addressCover;
     }
 
-    public void setCover(AddressCover cover)
+    public void setAddressCover(AddressCover addressCover)
     {
-        this.cover = cover;
+        this.addressCover = addressCover;
+    }
+
+    public ArticleCover getArticleCover()
+    {
+        return articleCover;
+    }
+
+    public void setArticleCover(ArticleCover articleCover)
+    {
+        this.articleCover = articleCover;
     }
 }

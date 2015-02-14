@@ -22,7 +22,7 @@ public class IKnowTravelApplication extends Application
 
         restAdapter = new RestAdapter.Builder()
                 .setLogLevel(RestAdapter.LogLevel.FULL)
-                .setEndpoint("http://api.iknow.travel/")
+                .setEndpoint(DataSource.API_DOMAIN_ADDRESS)
                 .setRequestInterceptor(ApiHelper.requestInterceptor)
                 .build();
 
@@ -50,7 +50,7 @@ public class IKnowTravelApplication extends Application
 
         restAdapter = new RestAdapter.Builder()
                 .setLogLevel(RestAdapter.LogLevel.FULL)
-                .setEndpoint("http://api.iknow.travel/")
+                .setEndpoint(DataSource.API_DOMAIN_ADDRESS)
                 .setRequestInterceptor(requestInterceptor)
                 .build();
 

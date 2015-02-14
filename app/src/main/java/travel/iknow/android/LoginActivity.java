@@ -107,8 +107,8 @@ public class LoginActivity extends ActionBarActivity implements LoaderCallbacks<
     void startMainActivity()
     {
         Intent intent = new Intent(this, MainActivity.class);
-        intent.setFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
         startActivity(intent);
+        finish();
     }
 
     private void populateAutoComplete()
