@@ -18,9 +18,15 @@ import retrofit.Callback;
 import retrofit.RetrofitError;
 import retrofit.client.Response;
 import travel.iknow.android.data.DataSource;
+import travel.iknow.android.data.model.AddressCover;
+import travel.iknow.android.data.model.ArticleCover;
+import travel.iknow.android.data.model.Category;
 import travel.iknow.android.data.model.Content;
 import travel.iknow.android.data.model.Local;
 import travel.iknow.android.data.model.Token;
+import travel.iknow.android.db.ContentAddressCoverRelation;
+import travel.iknow.android.db.ContentArticleCoverRelation;
+import travel.iknow.android.db.ContentCategoriesRelation;
 import travel.iknow.android.db.DbHelper;
 import travel.iknow.android.rest.ApiHelper;
 
@@ -67,6 +73,8 @@ public class MainActivity extends ActionBarActivity
 
         adapter = new ContentAdapter(MainActivity.this, currentCursor);
         recyclerView.setAdapter(adapter);
+
+        refreshAdapter();
 
         recyclerView.setOnScrollListener(new EndlessRecyclerOnScrollListener(layoutManager)
         {
@@ -163,6 +171,59 @@ public class MainActivity extends ActionBarActivity
         application.apiHelper.requestToken(cb);
     }
 
+    private void onContentLoaded(List<Content> contents)
+    {
+        loadingBar.setVisibility(View.GONE);
+        Toast.makeText(MainActivity.this, "Content loaded", Toast.LENGTH_SHORT)
+                .show();
+
+        for (Content content : contents)
+        {
+            if(!DbHelper.isIdInDB(Content.class, content.getContentId()))
+            {
+                ContentCategoriesRelation categoriesRelation =
+                        new ContentCategoriesRelation(content);
+                if(!DbHelper.isRelationInDB(ContentCategoriesRelation.class,
+                        categoriesRelation.getContentId()))
+                    categoriesRelation.save();
+
+                if(content.getType().equals(DataSource.TYPE_ADDRESS))
+                {
+                    ContentAddressCoverRelation addressCoverRelation =
+                            new ContentAddressCoverRelation(content);
+
+                    if(!DbHelper.isRelationInDB(ContentAddressCoverRelation.class,
+                            addressCoverRelation.getContentId()))
+                        addressCoverRelation.save();
+
+                    if(!DbHelper.isIdInDB(AddressCover.class, content.getAddressCover().getCoverId()))
+                        content.getAddressCover().save();
+                }
+
+                if(content.getType().equals(DataSource.TYPE_ARTICLE))
+                {
+                    ContentArticleCoverRelation articleCoverRelation =
+                            new ContentArticleCoverRelation(content);
+
+                    if(!DbHelper.isRelationInDB(ContentArticleCoverRelation.class,
+                            articleCoverRelation.getContentId()))
+                        articleCoverRelation.save();
+
+                    if(!DbHelper.isIdInDB(ArticleCover.class, content.getArticleCover().getCoverId()))
+                        content.getArticleCover().save();
+                }
+
+                for(Category cat : content.getCategories())
+                {
+                    if(!DbHelper.isIdInDB(Category.class, cat.getCategoryId())) cat.save();
+                }
+                content.save();
+            }
+        }
+
+        refreshAdapter();
+    }
+
     private void getContent(int currentPage)
     {
         final IKnowTravelApplication application = ((IKnowTravelApplication) getApplication());
@@ -178,17 +239,7 @@ public class MainActivity extends ActionBarActivity
             @Override
             public void success(List<Content> contents, Response response)
             {
-                loadingBar.setVisibility(View.GONE);
-                Toast.makeText(MainActivity.this, "Content loaded", Toast.LENGTH_SHORT)
-                        .show();
-
-                for (Content content : contents)
-                {
-                    if(!DbHelper.isContentInDB(content.getContentId()))
-                        content.save();
-                }
-
-                refreshAdapter();
+                onContentLoaded(contents);
             }
 
             /**

@@ -19,6 +19,7 @@ public class Content extends Model
 
     @Column(name = "title")
     private String title;
+
     @Column(name = "type")
     private String type;
 

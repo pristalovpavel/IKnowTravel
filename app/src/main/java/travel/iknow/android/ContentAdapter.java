@@ -11,12 +11,16 @@ import android.widget.TextView;
 
 import com.squareup.picasso.Picasso;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import travel.iknow.android.data.DataSource;
-import travel.iknow.android.data.model.AbstractCover;
+import travel.iknow.android.data.model.AddressCover;
+import travel.iknow.android.data.model.ArticleCover;
 import travel.iknow.android.data.model.Category;
 import travel.iknow.android.data.model.Content;
+import travel.iknow.android.db.ContentArticleCoverRelation;
+import travel.iknow.android.db.ContentCategoriesRelation;
 import travel.iknow.android.db.DbHelper;
 
 /**
@@ -83,27 +87,35 @@ public class ContentAdapter extends RecyclerView.Adapter<ContentAdapter.ViewHold
         dataset.moveToPosition(position);
 
         Content content = DbHelper.findContent(dataset.getString(dataset.getColumnIndex("_id")));
-        // - get element from your dataset at this position
-        // - replace the contents of the view with that element
         holder.title.setText(content.getTitle());
 
-        String allCategories = "";
+        /*String allCategories = "";
         for(Category cat : content.getCategories())
         {
             allCategories = allCategories + cat.getName() + ", ";
         }
         if(allCategories.length() > 2) allCategories = allCategories.substring(0, allCategories.length() - 2);
-        holder.category.setText(allCategories);
+        */
+        ContentCategoriesRelation relation = DbHelper.getContentCategories(content.getContentId());
+        if(relation != null)
+        {
+            String categories = DbHelper.getCategoriesNamesByIds(relation.getCategoryIdsArray());
+            holder.category.setText(categories);
+        }
 
-        AbstractCover currentCover = content.getAddressCover();
+        String coverId = "";
 
         if(content.getType().equals(DataSource.TYPE_ARTICLE))
-            currentCover = content.getArticleCover();
+            coverId = DbHelper.getArticleCoverRelation(content.getContentId()).getArticleCoverId();
 
-        String imageUrl = makeImageUrl(content.getContentId());
+        if(content.getType().equals(DataSource.TYPE_ADDRESS))
+            coverId = DbHelper.getAddressCoverRelation(content.getContentId()).getAddressCoverId();
 
-        if(!imageUrl.isEmpty())
-            Picasso.with(context).load(imageUrl).into(holder.icon);
+        if (!coverId.isEmpty())
+        {
+            String imageUrl = makeImageUrl(coverId);
+            if (!imageUrl.isEmpty()) Picasso.with(context).load(imageUrl).into(holder.icon);
+        }
     }
 
     // Return the size of your dataset (invoked by the layout manager)
