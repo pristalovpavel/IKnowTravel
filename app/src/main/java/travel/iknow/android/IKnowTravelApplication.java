@@ -2,6 +2,8 @@ package travel.iknow.android;
 
 import android.app.Application;
 
+import com.activeandroid.ActiveAndroid;
+
 import retrofit.RequestInterceptor;
 import retrofit.RestAdapter;
 import travel.iknow.android.data.DataSource;
@@ -19,6 +21,8 @@ public class IKnowTravelApplication extends Application
     public void onCreate()
     {
         super.onCreate();
+
+        ActiveAndroid.initialize(this);
 
         restAdapter = new RestAdapter.Builder()
                 .setLogLevel(RestAdapter.LogLevel.FULL)

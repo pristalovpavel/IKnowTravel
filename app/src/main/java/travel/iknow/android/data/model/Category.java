@@ -1,20 +1,27 @@
-package travel.iknow.android.rest;
+package travel.iknow.android.data.model;
 
+import com.activeandroid.Model;
+import com.activeandroid.annotation.Column;
+import com.activeandroid.annotation.Table;
 import com.google.gson.annotations.SerializedName;
 
 /**
  * Created by Pristalov Pavel on 13.02.2015 for IKnowTravel.
  */
-public class Category
+@Table(name = "Categories")
+public class Category extends Model
 {
     @SerializedName("_id")
+    @Column(name = "_id")
     private String id;
+    @Column(name = "locale")
     private String locale;
+    @Column(name = "name")
     private String name;
 
     public Category()
     {
-        setId("");
+        setCategoryId("");
         setLocale("");
         setName("");
     }
@@ -29,12 +36,12 @@ public class Category
         this.name = name;
     }
 
-    public String getId()
+    public String getCategoryId()
     {
         return id;
     }
 
-    public void setId(String id)
+    public void setCategoryId(String id)
     {
         this.id = id;
     }

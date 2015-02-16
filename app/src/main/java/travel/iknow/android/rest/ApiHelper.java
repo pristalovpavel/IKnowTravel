@@ -11,6 +11,9 @@ import retrofit.http.GET;
 import retrofit.http.POST;
 import retrofit.http.Query;
 import travel.iknow.android.data.DataSource;
+import travel.iknow.android.data.model.Content;
+import travel.iknow.android.data.model.Local;
+import travel.iknow.android.data.model.Token;
 
 /**
  * Created by Pristalov Pavel on 12.02.2015 for IKnowTravel.
@@ -18,6 +21,7 @@ import travel.iknow.android.data.DataSource;
 public interface ApiHelper
 {
     public static final String API_VERSION = "4";
+    public static final int DEFAULT_CONTENT_LIMIT = 12;
 
     @POST("/auth/local")
     void registration(@Body Local local, Callback<Object> cb);
@@ -29,7 +33,7 @@ public interface ApiHelper
     void requestToken(Callback<Token> cb);
 
     @GET("/contents?region=Russia_Moscow")
-    void loadContent(Callback<List<Content>> cb);
+    void loadContent(@Query("skip") int skip, @Query("limit") int limit, Callback<List<Content>> cb);
 
     RequestInterceptor requestInterceptor = new RequestInterceptor()
     {

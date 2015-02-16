@@ -2,7 +2,6 @@ package travel.iknow.android;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
-import android.app.Activity;
 import android.app.LoaderManager.LoaderCallbacks;
 import android.content.CursorLoader;
 import android.content.Intent;
@@ -33,8 +32,8 @@ import retrofit.Callback;
 import retrofit.RetrofitError;
 import retrofit.client.Response;
 import travel.iknow.android.data.DataSource;
-import travel.iknow.android.rest.Local;
-import travel.iknow.android.rest.Token;
+import travel.iknow.android.data.model.Local;
+import travel.iknow.android.data.model.Token;
 
 
 /**
@@ -337,6 +336,8 @@ public class LoginActivity extends ActionBarActivity implements LoaderCallbacks<
     @Override
     public void onLoadFinished(Loader<Cursor> cursorLoader, Cursor cursor)
     {
+        if(cursor == null) return;
+
         List<String> emails = new ArrayList<String>();
         cursor.moveToFirst();
         while (!cursor.isAfterLast())

@@ -1,5 +1,8 @@
-package travel.iknow.android.rest;
+package travel.iknow.android.data.model;
 
+import com.activeandroid.Model;
+import com.activeandroid.annotation.Column;
+import com.activeandroid.annotation.Table;
 import com.google.gson.annotations.SerializedName;
 
 import java.util.ArrayList;
@@ -7,17 +10,27 @@ import java.util.ArrayList;
 /**
  * Created by Pristalov Pavel on 13.02.2015 for IKnowTravel.
  */
-public class Content
+@Table(name = "Content")
+public class Content extends Model
 {
+    @Column(name = "_id")
+    @SerializedName("_id")
+    private String id;
+
+    @Column(name = "title")
     private String title;
+
+    @Column(name = "type")
     private String type;
 
     private ArrayList<Category> categories;
 
     @SerializedName("address_cover_1x")
+    @Column(name = "address_cover")
     private AddressCover addressCover;
 
     @SerializedName("article_cover_1x")
+    @Column(name = "article_cover")
     private ArticleCover articleCover;
 
     public Content()
@@ -27,6 +40,14 @@ public class Content
         setCategories(new ArrayList<Category>());
         setAddressCover(new AddressCover());
         setArticleCover(new ArticleCover());
+    }
+
+    public String getContentId() {
+        return id;
+    }
+
+    public void setContentId(String id) {
+        this.id = id;
     }
 
     public String getTitle()

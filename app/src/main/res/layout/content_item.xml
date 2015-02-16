@@ -41,7 +41,6 @@
             android:textAppearance="?android:attr/textAppearanceMedium"
             android:layout_toEndOf="@+id/icon"
             android:layout_toRightOf="@+id/icon"
-            android:text="dhfkgnnfl"
             android:layout_marginRight="16dp"
             android:layout_marginTop="8dp"
             android:layout_marginBottom="8dp"
@@ -55,9 +54,7 @@
             android:layout_toRightOf="@+id/icon"
             android:layout_toEndOf="@+id/icon"
             android:layout_below="@+id/title"
-            android:text="dhfkgnnfl"
             android:layout_marginRight="16dp"
-            android:lines="1"
             android:layout_marginBottom="8dp"
             />
 

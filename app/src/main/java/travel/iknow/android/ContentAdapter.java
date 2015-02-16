@@ -1,6 +1,7 @@
 package travel.iknow.android;
 
 import android.content.Context;
+import android.database.Cursor;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -10,20 +11,24 @@ import android.widget.TextView;
 
 import com.squareup.picasso.Picasso;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import travel.iknow.android.data.DataSource;
-import travel.iknow.android.rest.AbstractCover;
-import travel.iknow.android.rest.AddressCover;
-import travel.iknow.android.rest.Category;
-import travel.iknow.android.rest.Content;
+import travel.iknow.android.data.model.AddressCover;
+import travel.iknow.android.data.model.ArticleCover;
+import travel.iknow.android.data.model.Category;
+import travel.iknow.android.data.model.Content;
+import travel.iknow.android.db.ContentArticleCoverRelation;
+import travel.iknow.android.db.ContentCategoriesRelation;
+import travel.iknow.android.db.DbHelper;
 
 /**
  * Created by Pristalov Pavel on 13.02.2015 for IKnowTravel.
  */
 public class ContentAdapter extends RecyclerView.Adapter<ContentAdapter.ViewHolder>
 {
-    private List<Content> dataset;
+    private Cursor dataset;
     private Context context;
 
     // Provide a reference to the views for each data item
@@ -46,10 +51,20 @@ public class ContentAdapter extends RecyclerView.Adapter<ContentAdapter.ViewHold
     }
 
     // Provide a suitable constructor (depends on the kind of dataset)
-    public ContentAdapter(Context context, List<Content> myDataset)
+    public ContentAdapter(Context context, Cursor newDataset)
     {
-        dataset = myDataset;
+        dataset = newDataset;
         this.context = context;
+    }
+
+    public Cursor swapCursor(Cursor newCursor)
+    {
+        Cursor oldCursor = dataset;
+
+        dataset = newCursor;
+        notifyDataSetChanged();
+
+        return oldCursor;
     }
 
     // Create new views (invoked by the layout manager)
@@ -67,41 +82,53 @@ public class ContentAdapter extends RecyclerView.Adapter<ContentAdapter.ViewHold
     @Override
     public void onBindViewHolder(ViewHolder holder, int position)
     {
-        Content content = dataset.get(position);
-        // - get element from your dataset at this position
-        // - replace the contents of the view with that element
+        if (dataset == null) return;
+
+        dataset.moveToPosition(position);
+
+        Content content = DbHelper.findContent(dataset.getString(dataset.getColumnIndex("_id")));
         holder.title.setText(content.getTitle());
 
-        String allCategories = "";
+        /*String allCategories = "";
         for(Category cat : content.getCategories())
         {
             allCategories = allCategories + cat.getName() + ", ";
         }
-        allCategories = allCategories.substring(0, allCategories.length() - 2);
-        holder.category.setText(allCategories);
+        if(allCategories.length() > 2) allCategories = allCategories.substring(0, allCategories.length() - 2);
+        */
+        ContentCategoriesRelation relation = DbHelper.getContentCategories(content.getContentId());
+        if(relation != null)
+        {
+            String categories = DbHelper.getCategoriesNamesByIds(relation.getCategoryIdsArray());
+            holder.category.setText(categories);
+        }
 
-        AbstractCover currentCover = content.getAddressCover();
+        String coverId = "";
 
         if(content.getType().equals(DataSource.TYPE_ARTICLE))
-            currentCover = content.getArticleCover();
+            coverId = DbHelper.getArticleCoverRelation(content.getContentId()).getArticleCoverId();
 
-        makeImageUrl(currentCover);
+        if(content.getType().equals(DataSource.TYPE_ADDRESS))
+            coverId = DbHelper.getAddressCoverRelation(content.getContentId()).getAddressCoverId();
 
-        if(!currentCover.getUrl().isEmpty())
-            Picasso.with(context).load(currentCover.getUrl()).into(holder.icon);
+        if (!coverId.isEmpty())
+        {
+            String imageUrl = makeImageUrl(coverId);
+            if (!imageUrl.isEmpty()) Picasso.with(context).load(imageUrl).into(holder.icon);
+        }
     }
 
     // Return the size of your dataset (invoked by the layout manager)
     @Override
     public int getItemCount()
     {
-        return dataset.size();
+        return dataset != null ?
+                dataset.getCount():
+                0;
     }
 
-    private void makeImageUrl(AbstractCover cover)
+    private String makeImageUrl(String id)
     {
-        if(cover.getFilename().isEmpty()) return;
-
         /*Display display = ((Activity) context).getWindowManager().getDefaultDisplay();
         Point size = new Point();
         display.getSize(size);
@@ -110,21 +137,16 @@ public class ContentAdapter extends RecyclerView.Adapter<ContentAdapter.ViewHold
         int height = (int)(width / 1.5);
         */
 
-        if(!cover.getUrl().contains(cover.getFilename()))
-        {
-            String newUrl = new StringBuilder()
+        return new StringBuilder()
                     .append(DataSource.API_DOMAIN_ADDRESS)
                     .append(DataSource.PHOTO_SUFFIX)
-                    .append(cover.getFilename())
+                    .append(id)
                     .append("_144x144.jpg")
 //                    .append(width)
 //                    .append("x")
 //                    .append(height)
 //                    .append(".jpg")
                     .toString();
-
-            cover.setUrl(newUrl);
-        }
     }
 }
 
