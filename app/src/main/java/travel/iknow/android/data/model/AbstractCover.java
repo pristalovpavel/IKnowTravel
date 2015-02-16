@@ -2,11 +2,13 @@ package travel.iknow.android.data.model;
 
 import com.activeandroid.Model;
 import com.activeandroid.annotation.Column;
+import com.activeandroid.annotation.Table;
 import com.google.gson.annotations.SerializedName;
 
 /**
  * Created by home1 on 14.02.2015.
  */
+@Table(name = "AbstractCover")
 public abstract class AbstractCover extends Model
 {
     @SerializedName("_id")

@@ -1,6 +1,7 @@
 package travel.iknow.android;
 
 import android.content.SharedPreferences;
+import android.database.Cursor;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.widget.LinearLayoutManager;
@@ -17,9 +18,11 @@ import retrofit.Callback;
 import retrofit.RetrofitError;
 import retrofit.client.Response;
 import travel.iknow.android.data.DataSource;
-import travel.iknow.android.rest.Content;
-import travel.iknow.android.rest.Local;
-import travel.iknow.android.rest.Token;
+import travel.iknow.android.data.model.Content;
+import travel.iknow.android.data.model.Local;
+import travel.iknow.android.data.model.Token;
+import travel.iknow.android.db.DbHelper;
+import travel.iknow.android.rest.ApiHelper;
 
 /**
  * Created by Pristalov Pavel on 12.02.2015 for IKnowTravel.
@@ -32,8 +35,13 @@ public class MainActivity extends ActionBarActivity
 
     private ProgressBar loadingBar;
     private RecyclerView recyclerView;
-    private RecyclerView.Adapter adapter;
-    private RecyclerView.LayoutManager layoutManager;
+    private ContentAdapter adapter;
+    private LinearLayoutManager layoutManager;
+
+    private Cursor currentCursor;
+
+    private int currentPage = 0;
+    public static final int CONTENT_DB_LOADER_ID = 1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -48,20 +56,27 @@ public class MainActivity extends ActionBarActivity
         text.setText(R.string.app_name);
 
         loadingBar = (ProgressBar) findViewById(R.id.loading_progress);
-        loadingBar.setVisibility(View.VISIBLE);
 
         performAuth();
 
         recyclerView = (RecyclerView) findViewById(R.id.recycler_view);
-
-        // use this setting to improve performance if you know that changes
-        // in content do not change the layout size of the RecyclerView
         recyclerView.setHasFixedSize(true);
 
-        // use a linear layout manager
         layoutManager = new LinearLayoutManager(this);
         recyclerView.setLayoutManager(layoutManager);
 
+        adapter = new ContentAdapter(MainActivity.this, currentCursor);
+        recyclerView.setAdapter(adapter);
+
+        recyclerView.setOnScrollListener(new EndlessRecyclerOnScrollListener(layoutManager)
+        {
+            @Override
+            public void onLoadMore(int currentPage)
+            {
+                MainActivity.this.currentPage = currentPage;
+                getContent(currentPage);
+            }
+        });
     }
 
     private void auth()
@@ -87,7 +102,7 @@ public class MainActivity extends ActionBarActivity
                 Toast.makeText(MainActivity.this, "Successfully authed!", Toast.LENGTH_SHORT)
                         .show();
 
-                getContent();
+                getContent(currentPage);
             }
 
             /**
@@ -148,7 +163,7 @@ public class MainActivity extends ActionBarActivity
         application.apiHelper.requestToken(cb);
     }
 
-    private void getContent()
+    private void getContent(int currentPage)
     {
         final IKnowTravelApplication application = ((IKnowTravelApplication) getApplication());
 
@@ -167,9 +182,13 @@ public class MainActivity extends ActionBarActivity
                 Toast.makeText(MainActivity.this, "Content loaded", Toast.LENGTH_SHORT)
                         .show();
 
-                // specify an adapter (see also next example)
-                adapter = new ContentAdapter(MainActivity.this, contents);
-                recyclerView.setAdapter(adapter);
+                for (Content content : contents)
+                {
+                    if(!DbHelper.isContentInDB(content.getContentId()))
+                        content.save();
+                }
+
+                refreshAdapter();
             }
 
             /**
@@ -186,6 +205,23 @@ public class MainActivity extends ActionBarActivity
             }
         };
 
-        application.apiHelper.loadContent(cb);
+        loadingBar.setVisibility(View.VISIBLE);
+        application.apiHelper.loadContent(currentPage * ApiHelper.DEFAULT_CONTENT_LIMIT,
+                ApiHelper.DEFAULT_CONTENT_LIMIT,
+                cb);
     }
+
+    private void refreshAdapter()
+    {
+        getSupportLoaderManager().restartLoader(CONTENT_DB_LOADER_ID, null, loader);
+    }
+
+    ContentLoader loader = new ContentLoader(this)
+    {
+        @Override
+        public void onDataLoaded(Cursor cursor)
+        {
+            adapter.swapCursor(cursor);
+        }
+    };
 }

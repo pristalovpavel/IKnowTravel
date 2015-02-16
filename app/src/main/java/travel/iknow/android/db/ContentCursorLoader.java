@@ -12,9 +12,9 @@ import travel.iknow.android.data.model.Content;
 /**
  * Created by home1 on 14.02.2015.
  */
-public class ContentLoader extends CursorLoader
+public class ContentCursorLoader extends CursorLoader
 {
-    public ContentLoader(Context context)
+    public ContentCursorLoader(Context context)
     {
         super(context);
     }
